@@ -26,12 +26,12 @@ describe('getObject', () => {
         bucketName: 'filebase-upload-tests',
         token: Deno.env.get('FILEBASE_TOKEN')!,
         filename: 'hello.txt',
-        apiUrl: 'stauro.dev',
+        apiUrl: 'omnipin.eth',
       })
     } catch (error) {
       if ((error as Error).cause) {
-        assertStringIncludes(((error as Error).cause as URL).hostname, 'filebase-upload-tests.stauro.dev')
-      } else assertStringIncludes((error as Error).message, 'filebase-upload-tests.stauro.dev')
+        assertStringIncludes(((error as Error).cause as URL).hostname, 'filebase-upload-tests.omnipin.eth')
+      } else assertStringIncludes((error as Error).message, 'filebase-upload-tests.omnipin.eth')
     }
   })
 })

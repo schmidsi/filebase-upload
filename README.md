@@ -11,13 +11,13 @@ Minimal library to upload files on [Filebase](https://filebase.com) S3 API. Part
 For Node.js:
 
 ```sh
-pnpm i @stauro/filebase-upload
+pnpm i @omnipin/filebase-upload
 ```
 
 For Deno:
 
 ```sh
-deno add jsr:@stauro/filebase-upload
+deno add jsr:@omnipin/filebase-upload
 ```
 
 ## Usage
@@ -37,7 +37,7 @@ The default `apiUrl` is `s3.filebase.com`. To change, pass in the url to the `ap
 ### Node.js
 
 ```ts
-import { createPresignedUrl } from '@stauro/filebase-upload'
+import { createPresignedUrl } from '@omnipin/filebase-upload'
 
 const file = new File(['Hello world'], 'hello.txt')
 
@@ -59,7 +59,7 @@ node --env-file=.env main.js
 ### Deno
 
 ```ts
-import { createPresignedUrl } from '@stauro/filebase-upload'
+import { createPresignedUrl } from '@omnipin/filebase-upload'
 import { load } from '@std/dotenv'
 
 const env = await load()
@@ -163,5 +163,5 @@ console.log(`is uploaded? ${isUploaded ? 'yes' : 'no'}`)
 [github-actions]: https://github.com/staurodev/filebase-upload/actions
 [cov]: https://coveralls.io/github/StauroDEV/filebase-upload
 [cov-badge]: https://img.shields.io/coveralls/github/StauroDEV/filebase-upload?style=for-the-badge&color=FFAE00
-[v-badge-url]: https://img.shields.io/npm/v/@stauro/filebase-upload?style=for-the-badge&logo=npm&label=&color=FFAE00
-[npm-url]: https://www.npmjs.com/package/@stauro/filebase-upload
+[v-badge-url]: https://img.shields.io/npm/v/@omnipin/filebase-upload?style=for-the-badge&logo=npm&label=&color=FFAE00
+[npm-url]: https://www.npmjs.com/package/@omnipin/filebase-upload

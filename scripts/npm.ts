@@ -15,7 +15,7 @@ await build({
     target: 'ES2022',
   },
   package: {
-    name: '@stauro/filebase-upload',
+    name: '@omnipin/filebase-upload',
     version: Deno.args[0],
     description: 'Minimal library to upload files on Filebase S3 API. Partially based on AWS SDK v3.',
     license: 'Apache-2.0',
