@@ -74,46 +74,43 @@ export const headObject = async (
     filename: string
   },
 ): Promise<[boolean, string | null]> => {
-  let requestOptions: aws4.Request & { key?: string } = {
-    host: `${bucketName}.${apiUrl ?? FILEBASE_API_URL}`,
-    path: `/${filename}`,
-    key: `/${filename}`,
-    region: 'us-east-1',
-    method: 'HEAD',
-    service: 's3',
-    headers: {},
-  }
-  requestOptions = generateFilebaseRequestOptions(
-    token,
-    requestOptions,
+  const url = parseUrl(`https://${bucketName}.${apiUrl ?? FILEBASE_API_URL}/${filename}`)
+
+  const { accessKeyId, secretAccessKey } = fromEnv(token)()
+
+  const signedRequest = presignRequest(
+    new HttpRequest({ ...url, method: 'GET', headers: {} }),
+    {
+      accessKeyId,
+      secretAccessKey,
+      region: 'us-east-1',
+      expiresIn: 3600,
+    },
   )
-  return await fetch(
-    `https://${requestOptions.host}${requestOptions.path}`,
-    requestOptions as RequestInit,
-  )
-    .then((res) => [res.status == 200, res.headers.get('x-amz-meta-cid')])
+
+  const res = await fetch(formatUrl(signedRequest))
+  await res.body?.cancel()
+  return [res.status == 200, res.headers.get('x-amz-meta-cid')]
 }
 
-export const getObject = async (
+export const getObject = (
   { bucketName, filename, apiUrl, token }: RequiredArgs & {
     filename: string
   },
 ): Promise<Response> => {
-  let requestOptions: aws4.Request & { key?: string } = {
-    host: `${bucketName}.${apiUrl ?? FILEBASE_API_URL}`,
-    path: `/${filename}`,
-    key: `/${filename}`,
-    region: 'us-east-1',
-    method: 'GET',
-    service: 's3',
-    headers: {},
-  }
-  requestOptions = generateFilebaseRequestOptions(
-    token,
-    requestOptions,
+  const url = parseUrl(`https://${bucketName}.${apiUrl ?? FILEBASE_API_URL}/${filename}`)
+
+  const { accessKeyId, secretAccessKey } = fromEnv(token)()
+
+  const signedRequest = presignRequest(
+    new HttpRequest({ ...url, method: 'GET', headers: {} }),
+    {
+      accessKeyId,
+      secretAccessKey,
+      region: 'us-east-1',
+      expiresIn: 3600,
+    },
   )
-  return await fetch(
-    `https://${requestOptions.host}${requestOptions.path}`,
-    requestOptions as RequestInit,
-  )
+
+  return fetch(formatUrl(signedRequest))
 }

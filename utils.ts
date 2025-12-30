@@ -94,7 +94,7 @@ export const formatUrl = (
 
 export const fromEnv = (filebaseToken: string): () => AwsCredentialIdentity => {
   return () => {
-    const [accessKeyId, secretAccessKey] = atob(filebaseToken).split(':')
+    const [accessKeyId, secretAccessKey] = atob(filebaseToken).split(':').map((s) => s.trim())
     if (!accessKeyId || !secretAccessKey) {
       throw new Error('Missing access key ID and secret access key')
     }
