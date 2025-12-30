@@ -1,10 +1,9 @@
 import { FILEBASE_API_URL } from './constants.ts'
 import type { HeaderBag, HttpRequest as IHttpRequest, QueryParameterBag } from '@smithy/types'
 
-import type aws4 from 'aws4'
 import type { RequiredArgs } from './types.ts'
 
-import { createBucket, formatUrl, fromEnv, generateFilebaseRequestOptions, parseUrl, presignRequest } from './utils.ts'
+import { createBucket, formatUrl, fromEnv, parseUrl, presignRequest } from './utils.ts'
 
 class HttpRequest {
   method: string

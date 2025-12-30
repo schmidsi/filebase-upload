@@ -28,14 +28,12 @@ await build({
     },
     devDependencies: {
       '@types/node': 'latest',
-      '@types/aws4': 'latest',
     },
     publishConfig: {
       access: 'public',
     },
     dependencies: {
       '@smithy/types': '^4.3.2',
-      'aws4': '^1.13.2',
     },
   },
   postBuild() {

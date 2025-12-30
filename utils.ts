@@ -1,6 +1,6 @@
 import { FILEBASE_API_URL } from './constants.ts'
-import aws4 from 'aws4'
 import type { RequiredArgs } from './types.ts'
+import * as crypto from 'node:crypto'
 
 import { createHash, createHmac } from 'node:crypto'
 import type { AwsCredentialIdentity, HttpRequest as IHttpRequest, QueryParameterBag } from '@smithy/types'
@@ -22,15 +22,71 @@ export const parseUrl = (
   }
 }
 
+export type RequestOptions = {
+  host: string
+  region: string
+  service: string
+  method: string
+  path: string
+  headers: Record<string, string | number>
+  key?: string
+}
+
 export const generateFilebaseRequestOptions = (
   token: string,
-  requestOptions: aws4.Request & { key?: string },
+  requestOptions: RequestOptions,
 ) => {
   const [accessKeyId, secretAccessKey] = atob(token).split(':')
   if (!accessKeyId || !secretAccessKey) {
     throw new Error('Missing access key ID and secret access key')
   }
-  aws4.sign(requestOptions, { accessKeyId, secretAccessKey })
+
+  const now = new Date()
+  const amzDate = now.toISOString().replace(/[:-]|\.\d{3}/g, '') + 'Z'
+  const dateStamp = amzDate.slice(0, 8)
+
+  // Payload hash (empty string for PUT with no body)
+  const payloadHash = crypto.createHash('sha256').update('').digest('hex')
+
+  // Canonical request
+  const canonicalHeaders = `content-length:${
+    requestOptions.headers['Content-Length']
+  }\nhost:${requestOptions.host}\nx-amz-content-sha256:${payloadHash}\nx-amz-date:${amzDate}\n`
+  const signedHeaders = 'content-length;host;x-amz-content-sha256;x-amz-date'
+  const canonicalRequest = [
+    requestOptions.method,
+    requestOptions.path,
+    '', // query string
+    canonicalHeaders,
+    signedHeaders,
+    payloadHash,
+  ].join('\n')
+
+  const hashedCanonicalRequest = crypto.createHash('sha256').update(canonicalRequest).digest('hex')
+
+  // String to sign
+  const credentialScope = `${dateStamp}/${requestOptions.region}/${requestOptions.service}/aws4_request`
+  const stringToSign = [
+    'AWS4-HMAC-SHA256',
+    amzDate,
+    credentialScope,
+    hashedCanonicalRequest,
+  ].join('\n')
+
+  // Signing key
+  const kDate = crypto.createHmac('sha256', 'AWS4' + secretAccessKey).update(dateStamp).digest()
+  const kRegion = crypto.createHmac('sha256', kDate).update(requestOptions.region).digest()
+  const kService = crypto.createHmac('sha256', kRegion).update(requestOptions.service).digest()
+  const kSigning = crypto.createHmac('sha256', kService).update('aws4_request').digest()
+
+  const signature = crypto.createHmac('sha256', kSigning).update(stringToSign).digest('hex')
+
+  // Fill in the headers
+  requestOptions.headers['X-Amz-Content-Sha256'] = payloadHash
+  requestOptions.headers['X-Amz-Date'] = amzDate
+  requestOptions.headers['Authorization'] =
+    `AWS4-HMAC-SHA256 Credential=${accessKeyId}/${credentialScope}, SignedHeaders=${signedHeaders}, Signature=${signature}`
+
   return requestOptions
 }
 
@@ -108,7 +164,7 @@ export const fromEnv = (filebaseToken: string): () => AwsCredentialIdentity => {
 export const createBucket = async (
   { bucketName, apiUrl, token }: RequiredArgs,
 ) => {
-  let requestOptions: aws4.Request = {
+  let requestOptions: RequestOptions = {
     host: `${bucketName}.${apiUrl ?? FILEBASE_API_URL}`,
     region: 'us-east-1',
     method: 'PUT',
@@ -116,9 +172,11 @@ export const createBucket = async (
     headers: {
       'Content-Length': 0,
     },
+    path: '/',
   }
   requestOptions = generateFilebaseRequestOptions(token, requestOptions)
-  return await fetch(`https://${requestOptions.host}/`, requestOptions as RequestInit)
+
+  return await fetch(`https://${requestOptions.host}/`, requestOptions as unknown as RequestInit)
     .then((res) => res.status == 200)
 }
 
